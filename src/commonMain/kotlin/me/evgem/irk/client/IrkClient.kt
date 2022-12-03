@@ -11,7 +11,7 @@ object IrkClient {
         println("start up")
 
         val selectorManager = SelectorManager()
-        val serverSocket = aSocket(selectorManager).tcp().bind("127.0.0.1", 9002)
+        val serverSocket = aSocket(selectorManager).tcp().bind("127.0.0.1", 9003)
         serverSocket.accept().openReadChannel().readUTF8Line().let(::println)
     }
 }
