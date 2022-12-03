@@ -2,8 +2,8 @@ plugins {
     kotlin("multiplatform") version "1.7.20"
 }
 
-group = "me.evgem"
-version = "1.0-SNAPSHOT"
+group = "me.evgem.irk.client"
+version = "0.1"
 
 repositories {
     mavenCentral()
@@ -28,9 +28,14 @@ kotlin {
         isMingwX64 -> mingwX64("native")
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
-    
+
     sourceSets {
-        val commonMain by getting
+        val ktorVersion = "2.1.3"
+        val commonMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-network:$ktorVersion")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
@@ -38,8 +43,6 @@ kotlin {
         }
         val jvmMain by getting
         val jvmTest by getting
-        val jsMain by getting
-        val jsTest by getting
         val nativeMain by getting
         val nativeTest by getting
     }
