@@ -4,7 +4,6 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.isClosed
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.core.Closeable
 import io.ktor.utils.io.core.buildPacket
 import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.writeFully
@@ -15,6 +14,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.message.Message
+import me.evgem.irk.client.internal.util.Closeable
 import me.evgem.irk.client.internal.util.Log
 import me.evgem.irk.client.internal.util.wrap
 
@@ -35,6 +35,8 @@ internal class DefaultMessageHandler(
 
     companion object {
         private const val LOG_RAW = false
+        private const val LOG_READ = true
+        private const val LOG_WRITE = true
     }
 
     private val writeChannel = socket.openWriteChannel(autoFlush = true)
@@ -43,7 +45,7 @@ internal class DefaultMessageHandler(
     private val receiveMessagesFlow: SharedFlow<Message> = flow {
         while (true) {
             readMessage().let {
-                Log("received $it")
+                if (LOG_READ) Log("received $it")
                 emit(it)
             }
         }
@@ -51,7 +53,7 @@ internal class DefaultMessageHandler(
 
     private suspend fun readMessage(): Message {
         return readMessageByteArray()
-            .also { if (LOG_RAW) Log("received raw: ${it.decodeToString()}") }
+            .also { if (LOG_READ && LOG_RAW) Log("received raw: ${it.decodeToString()}") }
             .wrap()
             .let(messageDeserializer::deserialize)
     }
@@ -66,9 +68,9 @@ internal class DefaultMessageHandler(
     }
 
     override suspend fun sendMessage(message: Message) {
-        Log("sending $message")
+        if (LOG_WRITE) Log("sending $message")
         messageSerializer.serialize(message)
-            .also { if (LOG_RAW) Log(it.toString()) }
+            .also { if (LOG_WRITE && LOG_RAW) Log(it.toString()) }
             .let { writeChannel.writeFully(it.array) }
     }
 
