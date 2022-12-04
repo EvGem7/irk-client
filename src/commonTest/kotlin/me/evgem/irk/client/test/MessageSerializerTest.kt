@@ -265,8 +265,6 @@ class MessageSerializerTest {
         assertEquals(expected, actual)
     }
 
-    //=================
-
     @Test
     fun `test trailing param with cr`() {
         assertFails {
