@@ -5,8 +5,8 @@ fun ByteArray.split(byte: Byte): List<ByteArray> {
     val result = mutableListOf<ByteArray>()
     for (i in indices) {
         if (get(i) == byte && i - start > 0) {
-            start = i + 1
             result += copyOfRange(fromIndex = start, toIndex = i)
+            start = i + 1
         }
     }
     return result

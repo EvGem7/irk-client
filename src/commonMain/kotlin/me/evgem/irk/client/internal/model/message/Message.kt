@@ -1,5 +1,6 @@
 package me.evgem.irk.client.internal.model.message
 
+import io.ktor.utils.io.core.toByteArray
 import me.evgem.irk.client.internal.util.ByteArrayWrapper
 
 internal open class Message(
@@ -12,6 +13,18 @@ internal open class Message(
     companion object {
         const val MAX_MIDDLE_PARAMS = 14
     }
+
+    constructor(
+        command: String,
+        trailingParam: String?,
+        prefix: String? = null,
+        middleParams: List<String> = emptyList(),
+    ) : this(
+        command = command,
+        prefix = prefix,
+        middleParams = middleParams.map { ByteArrayWrapper(it.toByteArray()) },
+        trailingParam = trailingParam?.toByteArray()?.let(::ByteArrayWrapper),
+    )
 
     init {
         require(middleParams.size <= MAX_MIDDLE_PARAMS)
