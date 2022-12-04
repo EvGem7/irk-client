@@ -3,11 +3,15 @@ package me.evgem.irk.client.internal.network.handler.message
 import io.ktor.utils.io.core.buildPacket
 import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.core.writeFully
+import me.evgem.irk.client.internal.model.COLON
 import me.evgem.irk.client.internal.model.CR
 import me.evgem.irk.client.internal.model.LF
+import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
+import me.evgem.irk.client.internal.model.NULL
+import me.evgem.irk.client.internal.model.SPACE
 import me.evgem.irk.client.internal.model.message.Message
-import me.evgem.irk.client.internal.util.ByteArrayWrapper
-import me.evgem.irk.client.internal.util.wrap
+import me.evgem.irk.client.util.ByteArrayWrapper
+import me.evgem.irk.client.util.wrap
 
 internal interface MessageSerializer {
     fun serialize(message: Message): ByteArrayWrapper
@@ -18,6 +22,7 @@ internal fun MessageSerializer(): MessageSerializer = DefaultMessageSerializer()
 private class DefaultMessageSerializer : MessageSerializer {
 
     override fun serialize(message: Message): ByteArrayWrapper {
+        verify(message)
         return buildPacket {
             message.prefix?.let {
                 append(':')
@@ -25,13 +30,18 @@ private class DefaultMessageSerializer : MessageSerializer {
                 append(' ')
             }
             append(message.command)
-            message.middleParams.forEach {
-                append(' ')
-                writeFully(it.array)
-            }
+            message
+                .middleParams
+                .asSequence()
+                .map { it.array }
+                .filter { it.isNotEmpty() }
+                .forEach {
+                    append(' ')
+                    writeFully(it)
+                }
             message.trailingParam?.let {
                 append(' ')
-                if (message.middleParams.size < Message.MAX_MIDDLE_PARAMS) {
+                if (message.middleParams.size < MESSAGE_MAX_MIDDLE_PARAMS) {
                     append(':')
                 }
                 writeFully(it.array)
@@ -39,5 +49,30 @@ private class DefaultMessageSerializer : MessageSerializer {
             writeByte(Byte.CR)
             writeByte(Byte.LF)
         }.readBytes().wrap()
+    }
+
+    private fun verify(message: Message) {
+        message.middleParams.forEach(this::verifyParam)
+        message.trailingParam?.let(this::verifyParam)
+        if (message.middleParams.any { it.array.contains(Byte.SPACE) }) {
+            throw IllegalArgumentException("Middle parameters cannot contain spaces.")
+        }
+        if (message.middleParams.any { it.array.firstOrNull() == Byte.COLON }) {
+            throw IllegalArgumentException("Middle parameters cannot start with colon \':\'.")
+        }
+        if (message.middleParams.size > MESSAGE_MAX_MIDDLE_PARAMS) {
+            throw IllegalArgumentException("Maximum $MESSAGE_MAX_MIDDLE_PARAMS middle params is allowed.")
+        }
+        if (message.command.isBlank()) {
+            throw IllegalArgumentException("Message command cannot be blank.")
+        }
+    }
+
+    private fun verifyParam(param: ByteArrayWrapper) {
+        when {
+            param.array.contains(Byte.CR) -> throw IllegalArgumentException("Parameter cannot contain CR bytes.")
+            param.array.contains(Byte.LF) -> throw IllegalArgumentException("Parameter cannot contain LF bytes.")
+            param.array.contains(Byte.NULL) -> throw IllegalArgumentException("Parameter cannot contain NULL bytes.")
+        }
     }
 }

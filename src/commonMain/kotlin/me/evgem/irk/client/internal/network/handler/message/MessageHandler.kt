@@ -16,7 +16,7 @@ import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.message.Message
 import me.evgem.irk.client.internal.util.Closeable
 import me.evgem.irk.client.internal.util.Log
-import me.evgem.irk.client.internal.util.wrap
+import me.evgem.irk.client.util.wrap
 
 internal interface MessageHandler : Closeable {
 

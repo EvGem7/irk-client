@@ -1,10 +1,11 @@
 package me.evgem.irk.client.internal.network.handler.message
 
 import me.evgem.irk.client.internal.model.CR
-import me.evgem.irk.client.internal.model.Colon
-import me.evgem.irk.client.internal.model.Space
+import me.evgem.irk.client.internal.model.COLON
+import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
+import me.evgem.irk.client.internal.model.SPACE
 import me.evgem.irk.client.internal.model.message.Message
-import me.evgem.irk.client.internal.util.ByteArrayWrapper
+import me.evgem.irk.client.util.ByteArrayWrapper
 import me.evgem.irk.client.internal.util.split
 
 internal interface MessageDeserializer {
@@ -22,8 +23,8 @@ private class DefaultMessageDeserializer : MessageDeserializer {
         }
 
         val prefix: String?
-        if (arr[0] == Byte.Colon) {
-            val spaceIndex = arr.indexOf(Byte.Space).also {
+        if (arr[0] == Byte.COLON) {
+            val spaceIndex = arr.indexOf(Byte.SPACE).also {
                 require(it > 0) { "Invalid prefix: ${arr.decodeToString()}" }
             }
             prefix = arr.decodeToString(startIndex = 1, endIndex = spaceIndex)
@@ -33,7 +34,7 @@ private class DefaultMessageDeserializer : MessageDeserializer {
         }
 
         val command = arr
-            .indexOfFirst { it == Byte.Space }
+            .indexOfFirst { it == Byte.SPACE }
             .let { if (it == -1) arr.size else it }
             .let { commandEndIndex ->
                 arr.decodeToString(startIndex = 0, endIndex = commandEndIndex).also {
@@ -48,7 +49,7 @@ private class DefaultMessageDeserializer : MessageDeserializer {
             for (i in 1 until arr.size) {
                 val first = arr[i - 1]
                 val second = arr[i]
-                if (first == Byte.Space && second == Byte.Colon) {
+                if (first == Byte.SPACE && second == Byte.COLON) {
                     return@run i
                 }
             }
@@ -57,14 +58,14 @@ private class DefaultMessageDeserializer : MessageDeserializer {
         val middleParams: List<ByteArray>
         val trailingParam: ByteArray?
         if (trailingColonIndex > -1) {
-            middleParams = arr.copyOfRange(0, trailingColonIndex - 1).split(Byte.Space)
+            middleParams = arr.copyOfRange(0, trailingColonIndex - 1).split(Byte.SPACE)
 
             // TODO make a test to handle the case when trailing param is present, but it is empty
             trailingParam = arr.copyOfRange(trailingColonIndex + 1, arr.size)
         } else {
-            val split = arr.split(Byte.Space)
-            if (split.size > Message.MAX_MIDDLE_PARAMS) {
-                middleParams = split.subList(0, Message.MAX_MIDDLE_PARAMS)
+            val split = arr.split(Byte.SPACE)
+            if (split.size > MESSAGE_MAX_MIDDLE_PARAMS) {
+                middleParams = split.subList(0, MESSAGE_MAX_MIDDLE_PARAMS)
                 val trailingStartIndex = middleParams.fold(0) { acc, param -> acc + param.size + 1 }
                 trailingParam = arr.copyOfRange(trailingStartIndex, arr.size)
             } else {

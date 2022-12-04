@@ -10,6 +10,8 @@ val Byte.Companion.CR: Byte get() = 0x0D.toByte()
  */
 val Byte.Companion.LF: Byte get() = 0x0A.toByte()
 
-val Byte.Companion.Colon: Byte get() = ':'.code.toByte()
+val Byte.Companion.COLON: Byte get() = ':'.code.toByte()
+val Byte.Companion.SPACE: Byte get() = ' '.code.toByte()
+val Byte.Companion.NULL: Byte get() = 0.toByte()
 
-val Byte.Companion.Space: Byte get() = ' '.code.toByte()
+const val MESSAGE_MAX_MIDDLE_PARAMS = 14

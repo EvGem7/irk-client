@@ -1,4 +1,4 @@
-package me.evgem.irk.client.internal.util
+package me.evgem.irk.client.util
 
 class ByteArrayWrapper(val array: ByteArray) {
 
