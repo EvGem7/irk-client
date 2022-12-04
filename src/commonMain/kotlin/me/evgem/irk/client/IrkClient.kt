@@ -3,15 +3,31 @@ package me.evgem.irk.client
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
-import io.ktor.utils.io.readUTF8Line
+import io.ktor.network.sockets.openWriteChannel
+import io.ktor.utils.io.core.use
+import io.ktor.utils.io.read
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import me.evgem.irk.client.internal.di.IrkClientComponent
 
-object IrkClient {
+class IrkClient(
+    workCoroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
+) {
+
+    private val component = IrkClientComponent(workCoroutineDispatcher)
 
     suspend fun test() {
         println("start up")
 
         val selectorManager = SelectorManager()
-        val serverSocket = aSocket(selectorManager).tcp().bind("127.0.0.1", 9003)
-        serverSocket.accept().openReadChannel().readUTF8Line().let(::println)
+        aSocket(selectorManager).tcp().connect("", 1).use {
+            it.openWriteChannel()
+            it.openReadChannel().let {
+                it.readByte()
+                it.read { source, start, endExclusive ->
+                    source.1
+                }
+            }
+        }
     }
 }
