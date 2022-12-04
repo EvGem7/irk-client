@@ -21,3 +21,5 @@ class ByteArrayWrapper(val array: ByteArray) {
         return array.decodeToString()
     }
 }
+
+fun ByteArray.wrap(): ByteArrayWrapper = ByteArrayWrapper(this)
