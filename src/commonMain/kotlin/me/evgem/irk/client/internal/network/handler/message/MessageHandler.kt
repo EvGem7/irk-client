@@ -32,7 +32,7 @@ internal class DefaultMessageHandler(
     private val socket: Socket,
     private val messageDeserializer: MessageDeserializer,
     private val messageSerializer: MessageSerializer,
-    private val subtypeCaster: MessageIdentifier,
+    private val messageIdentifier: MessageIdentifier,
 ) : MessageHandler {
 
     companion object {
@@ -58,7 +58,7 @@ internal class DefaultMessageHandler(
             .also { if (LOG_READ && LOG_RAW) Log("received raw: ${it.decodeToString()}") }
             .wrap()
             .let(messageDeserializer::deserialize)
-            .let(subtypeCaster::identify)
+            .let(messageIdentifier::identify)
     }
 
     private suspend fun readMessageByteArray(): ByteArray {
