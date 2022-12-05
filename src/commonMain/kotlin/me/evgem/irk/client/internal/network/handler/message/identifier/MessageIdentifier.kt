@@ -30,9 +30,7 @@ private class DefaultMessageIdentifier(
         message.command.toIntOrNull()?.let(numericRepliesMap::get)?.let { numericReply ->
             return ReplyMessage(
                 numericReply = numericReply,
-                prefix = message.prefix,
-                middleParams = message.middleParams,
-                trailingParam = message.trailingParam,
+                stringReply = message.trailingParam?.toString(),
             )
         }
         commandsMap[message.command]?.let(messageFactoriesMap::get)?.let {
