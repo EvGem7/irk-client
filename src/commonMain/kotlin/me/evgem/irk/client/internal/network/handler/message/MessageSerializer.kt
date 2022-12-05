@@ -10,19 +10,19 @@ import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
 import me.evgem.irk.client.internal.model.NULL
 import me.evgem.irk.client.internal.model.SPACE
-import me.evgem.irk.client.internal.model.message.Message
+import me.evgem.irk.client.internal.model.message.AbstractMessage
 import me.evgem.irk.client.util.ByteArrayWrapper
 import me.evgem.irk.client.util.wrap
 
 internal interface MessageSerializer {
-    fun serialize(message: Message): ByteArrayWrapper
+    fun serialize(message: AbstractMessage): ByteArrayWrapper
 }
 
 internal fun MessageSerializer(): MessageSerializer = DefaultMessageSerializer()
 
 private class DefaultMessageSerializer : MessageSerializer {
 
-    override fun serialize(message: Message): ByteArrayWrapper {
+    override fun serialize(message: AbstractMessage): ByteArrayWrapper {
         verify(message)
         return buildPacket {
             message.prefix?.let {
@@ -52,7 +52,7 @@ private class DefaultMessageSerializer : MessageSerializer {
         }.readBytes().wrap()
     }
 
-    private fun verify(message: Message) {
+    private fun verify(message: AbstractMessage) {
         message.middleParams.forEach { verifyParam(it.array) }
         message.trailingParam?.array?.let(this::verifyParam)
         verifyParam(message.command.toByteArray())

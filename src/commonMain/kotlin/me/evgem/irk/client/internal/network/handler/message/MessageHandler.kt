@@ -13,16 +13,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import me.evgem.irk.client.internal.model.LF
-import me.evgem.irk.client.internal.model.message.Message
+import me.evgem.irk.client.internal.model.message.AbstractMessage
+import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
 import me.evgem.irk.client.internal.util.Closeable
 import me.evgem.irk.client.internal.util.Log
 import me.evgem.irk.client.util.wrap
 
 internal interface MessageHandler : Closeable {
 
-    suspend fun sendMessage(message: Message)
+    suspend fun sendMessage(message: AbstractMessage)
 
-    fun receiveMessages(): SharedFlow<Message>
+    fun receiveMessages(): SharedFlow<AbstractMessage>
 
     val isAlive: Boolean
 }
@@ -31,6 +32,7 @@ internal class DefaultMessageHandler(
     private val socket: Socket,
     private val messageDeserializer: MessageDeserializer,
     private val messageSerializer: MessageSerializer,
+    private val subtypeCaster: MessageIdentifier,
 ) : MessageHandler {
 
     companion object {
@@ -42,7 +44,7 @@ internal class DefaultMessageHandler(
     private val writeChannel = socket.openWriteChannel(autoFlush = true)
     private val readChannel = socket.openReadChannel()
 
-    private val receiveMessagesFlow: SharedFlow<Message> = flow {
+    private val receiveMessagesFlow: SharedFlow<AbstractMessage> = flow {
         while (true) {
             readMessage().let {
                 if (LOG_READ) Log("received $it")
@@ -51,11 +53,12 @@ internal class DefaultMessageHandler(
         }
     }.shareIn(CoroutineScope(socket.socketContext), SharingStarted.Lazily)
 
-    private suspend fun readMessage(): Message {
+    private suspend fun readMessage(): AbstractMessage {
         return readMessageByteArray()
             .also { if (LOG_READ && LOG_RAW) Log("received raw: ${it.decodeToString()}") }
             .wrap()
             .let(messageDeserializer::deserialize)
+            .let(subtypeCaster::identify)
     }
 
     private suspend fun readMessageByteArray(): ByteArray {
@@ -67,14 +70,14 @@ internal class DefaultMessageHandler(
         }.readBytes()
     }
 
-    override suspend fun sendMessage(message: Message) {
+    override suspend fun sendMessage(message: AbstractMessage) {
         if (LOG_WRITE) Log("sending $message")
         messageSerializer.serialize(message)
             .also { if (LOG_WRITE && LOG_RAW) Log(it.toString()) }
             .let { writeChannel.writeFully(it.array) }
     }
 
-    override fun receiveMessages(): SharedFlow<Message> {
+    override fun receiveMessages(): SharedFlow<AbstractMessage> {
         return receiveMessagesFlow
     }
 

@@ -5,6 +5,7 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.SocketAddress
 import io.ktor.network.sockets.TcpSocketBuilder
 import io.ktor.network.sockets.aSocket
+import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
 
 internal interface MessageHandlerFactory {
 
@@ -17,14 +18,16 @@ internal fun MessageHandlerFactory(
     selectorManager: SelectorManager,
     messageDeserializer: MessageDeserializer,
     messageSerializer: MessageSerializer,
+    messageIdentifier: MessageIdentifier,
 ): MessageHandlerFactory {
-    return DefaultMessageHandlerFactory(selectorManager, messageDeserializer, messageSerializer)
+    return DefaultMessageHandlerFactory(selectorManager, messageDeserializer, messageSerializer, messageIdentifier)
 }
 
 private class DefaultMessageHandlerFactory(
     private val selectorManager: SelectorManager,
     private val messageDeserializer: MessageDeserializer,
     private val messageSerializer: MessageSerializer,
+    private val messageIdentifier: MessageIdentifier,
 ) : MessageHandlerFactory {
 
     override suspend fun createMessageHandler(remoteAddress: SocketAddress): MessageHandler {
@@ -37,7 +40,7 @@ private class DefaultMessageHandlerFactory(
 
     private inline fun via(block: TcpSocketBuilder.() -> Socket): MessageHandler {
         return aSocket(selectorManager).tcp().block().let {
-            DefaultMessageHandler(it, messageDeserializer, messageSerializer)
+            DefaultMessageHandler(it, messageDeserializer, messageSerializer, messageIdentifier)
         }
     }
 }
