@@ -4,6 +4,7 @@ import me.evgem.irk.client.internal.model.CR
 import me.evgem.irk.client.internal.model.COLON
 import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
 import me.evgem.irk.client.internal.model.SPACE
+import me.evgem.irk.client.internal.model.message.EmptyMessage
 import me.evgem.irk.client.internal.model.message.Message
 import me.evgem.irk.client.util.ByteArrayWrapper
 import me.evgem.irk.client.internal.util.split
@@ -21,6 +22,7 @@ private class DefaultMessageDeserializer : MessageDeserializer {
             val haveCR = get(lastIndex.minus(1).coerceAtLeast(0)) == Byte.CR
             copyOfRange(fromIndex = 0, toIndex = size - if (haveCR) 2 else 1)
         }
+        if (arr.isEmpty()) return EmptyMessage
 
         val prefix: String?
         if (arr[0] == Byte.COLON) {
@@ -39,18 +41,26 @@ private class DefaultMessageDeserializer : MessageDeserializer {
             .let { commandEndIndex ->
                 arr.decodeToString(startIndex = 0, endIndex = commandEndIndex).also {
                     arr = arr.copyOfRange(
-                        fromIndex = commandEndIndex,
+                        fromIndex = commandEndIndex, // left 1 space so trailingColonIndex can be found
                         toIndex = arr.size,
                     )
                 }
             }
 
         val trailingColonIndex = kotlin.run {
+            var paramsCounter = 0
             for (i in 1 until arr.size) {
                 val first = arr[i - 1]
                 val second = arr[i]
                 if (first == Byte.SPACE && second == Byte.COLON) {
                     return@run i
+                }
+
+                // to prevent finding the colon inside the trailing parameter
+                if (first == Byte.SPACE && second != Byte.SPACE) {
+                    if (++paramsCounter == MESSAGE_MAX_MIDDLE_PARAMS + 1) {
+                        return@run -1
+                    }
                 }
             }
             -1
@@ -59,14 +69,14 @@ private class DefaultMessageDeserializer : MessageDeserializer {
         val trailingParam: ByteArray?
         if (trailingColonIndex > -1) {
             middleParams = arr.copyOfRange(0, trailingColonIndex - 1).split(Byte.SPACE)
-
-            // TODO make a test to handle the case when trailing param is present, but it is empty
             trailingParam = arr.copyOfRange(trailingColonIndex + 1, arr.size)
         } else {
             val split = arr.split(Byte.SPACE)
             if (split.size > MESSAGE_MAX_MIDDLE_PARAMS) {
                 middleParams = split.subList(0, MESSAGE_MAX_MIDDLE_PARAMS)
-                val trailingStartIndex = middleParams.fold(0) { acc, param -> acc + param.size + 1 }
+                val trailingStartIndex = middleParams
+                    .fold(0) { acc, param -> acc + param.size + 1 }
+                    .plus(1) // 1 left space
                 trailingParam = arr.copyOfRange(trailingStartIndex, arr.size)
             } else {
                 middleParams = split

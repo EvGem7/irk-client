@@ -50,6 +50,58 @@ class MessageSerializerTest {
     }
 
     @Test
+    fun `test command with spaces`() {
+        assertFails {
+            val message = Message(
+                command = "123 321",
+            )
+            serializer.serialize(message)
+        }
+    }
+
+    @Test
+    fun `test command with cr`() {
+        assertFails {
+            val message = Message(
+                command = "123\r321",
+            )
+            serializer.serialize(message)
+        }
+    }
+
+    @Test
+    fun `test command with lf`() {
+        assertFails {
+            val message = Message(
+                command = "123\n321",
+                middleParams = listOf("m1\nand\nm2"),
+                trailingParam = null,
+            )
+            serializer.serialize(message)
+        }
+    }
+
+    @Test
+    fun `test command with colon`() {
+        assertFails {
+            val message = Message(
+                command = "123:",
+            )
+            serializer.serialize(message)
+        }
+    }
+
+    @Test
+    fun `test command with null`() {
+        assertFails {
+            val message = Message(
+                command = "123\u0000321",
+            )
+            serializer.serialize(message)
+        }
+    }
+
+    @Test
     fun `test 1 middle param`() {
         val message = Message(
             command = "123",
@@ -261,7 +313,8 @@ class MessageSerializerTest {
             middleParams = (1..14).map { "m$it" },
         )
         val actual = serializer.serialize(message)
-        val expected = "123 m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12 m13 m14 :::yep cock : :туды сюды:\r\n".toByteArray().wrap()
+        val expected =
+            "123 m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12 m13 m14 :::yep cock : :туды сюды:\r\n".toByteArray().wrap()
         assertEquals(expected, actual)
     }
 

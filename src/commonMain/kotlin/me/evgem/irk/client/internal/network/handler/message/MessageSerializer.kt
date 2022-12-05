@@ -2,6 +2,7 @@ package me.evgem.irk.client.internal.network.handler.message
 
 import io.ktor.utils.io.core.buildPacket
 import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.core.toByteArray
 import io.ktor.utils.io.core.writeFully
 import me.evgem.irk.client.internal.model.COLON
 import me.evgem.irk.client.internal.model.CR
@@ -52,8 +53,15 @@ private class DefaultMessageSerializer : MessageSerializer {
     }
 
     private fun verify(message: Message) {
-        message.middleParams.forEach(this::verifyParam)
-        message.trailingParam?.let(this::verifyParam)
+        message.middleParams.forEach { verifyParam(it.array) }
+        message.trailingParam?.array?.let(this::verifyParam)
+        verifyParam(message.command.toByteArray())
+        if (message.command.contains(' ')) {
+            throw IllegalArgumentException("Command cannot contain spaces.")
+        }
+        if (message.command.contains(':')) {
+            throw IllegalArgumentException("Command cannot contain colons.")
+        }
         if (message.middleParams.any { it.array.contains(Byte.SPACE) }) {
             throw IllegalArgumentException("Middle parameters cannot contain spaces.")
         }
@@ -68,11 +76,11 @@ private class DefaultMessageSerializer : MessageSerializer {
         }
     }
 
-    private fun verifyParam(param: ByteArrayWrapper) {
+    private fun verifyParam(param: ByteArray) {
         when {
-            param.array.contains(Byte.CR) -> throw IllegalArgumentException("Parameter cannot contain CR bytes.")
-            param.array.contains(Byte.LF) -> throw IllegalArgumentException("Parameter cannot contain LF bytes.")
-            param.array.contains(Byte.NULL) -> throw IllegalArgumentException("Parameter cannot contain NULL bytes.")
+            param.contains(Byte.CR) -> throw IllegalArgumentException("Parameter cannot contain CR bytes.")
+            param.contains(Byte.LF) -> throw IllegalArgumentException("Parameter cannot contain LF bytes.")
+            param.contains(Byte.NULL) -> throw IllegalArgumentException("Parameter cannot contain NULL bytes.")
         }
     }
 }
