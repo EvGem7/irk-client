@@ -16,7 +16,7 @@ import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.message.AbstractMessage
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
 import me.evgem.irk.client.internal.util.Closeable
-import me.evgem.irk.client.internal.util.Log
+import me.evgem.irk.client.util.IrkLog
 import me.evgem.irk.client.util.wrap
 
 internal interface MessageHandler : Closeable {
@@ -47,7 +47,7 @@ internal class DefaultMessageHandler(
     private val receiveMessagesFlow: SharedFlow<AbstractMessage> = flow {
         while (true) {
             readMessage().let {
-                if (LOG_READ) Log("received $it")
+                if (LOG_READ) IrkLog("received $it")
                 emit(it)
             }
         }
@@ -55,7 +55,7 @@ internal class DefaultMessageHandler(
 
     private suspend fun readMessage(): AbstractMessage {
         return readMessageByteArray()
-            .also { if (LOG_READ && LOG_RAW) Log("received raw: ${it.decodeToString()}") }
+            .also { if (LOG_READ && LOG_RAW) IrkLog("received raw: ${it.decodeToString()}") }
             .wrap()
             .let(messageDeserializer::deserialize)
             .let(messageIdentifier::identify)
@@ -71,9 +71,9 @@ internal class DefaultMessageHandler(
     }
 
     override suspend fun sendMessage(message: AbstractMessage) {
-        if (LOG_WRITE) Log("sending $message")
+        if (LOG_WRITE) IrkLog("sending $message")
         messageSerializer.serialize(message)
-            .also { if (LOG_WRITE && LOG_RAW) Log(it.toString()) }
+            .also { if (LOG_WRITE && LOG_RAW) IrkLog(it.toString()) }
             .let { writeChannel.writeFully(it.array) }
     }
 
