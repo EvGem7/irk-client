@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
+import me.evgem.irk.client.exception.IrkException
 import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.message.AbstractMessage
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
@@ -39,6 +40,8 @@ internal class DefaultMessageHandler(
         private const val LOG_RAW = false
         private const val LOG_READ = true
         private const val LOG_WRITE = true
+
+        private const val MAX_MESSAGE_SIZE = 512
     }
 
     private val writeChannel = socket.openWriteChannel(autoFlush = true)
@@ -66,6 +69,9 @@ internal class DefaultMessageHandler(
             do {
                 val byte = readChannel.readByte()
                 writeByte(byte)
+                if (size > MAX_MESSAGE_SIZE) {
+                    throw IrkException("Message size limit of $MAX_MESSAGE_SIZE exceeded.")
+                }
             } while (byte != Byte.LF)
         }.readBytes()
     }
