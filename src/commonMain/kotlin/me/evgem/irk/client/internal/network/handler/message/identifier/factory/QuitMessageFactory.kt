@@ -11,6 +11,9 @@ internal class QuitMessageFactory : MessageFactory<QuitMessage> {
         get() = MessageCommand.QUIT
 
     override fun create(unknownMessage: UnknownMessage): QuitMessage {
-        return QuitMessage(unknownMessage.trailingParam?.array?.decodeToString().orEmpty())
+        return QuitMessage(
+            quitMessage = unknownMessage.trailingParam?.toString().orEmpty(),
+            who = unknownMessage.prefix,
+        )
     }
 }

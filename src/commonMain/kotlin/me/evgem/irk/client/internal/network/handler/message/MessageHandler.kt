@@ -6,12 +6,18 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.core.buildPacket
 import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.errors.EOFException
 import io.ktor.utils.io.writeFully
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.takeWhile
 import me.evgem.irk.client.exception.IrkException
 import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.message.AbstractMessage
@@ -24,7 +30,7 @@ internal interface MessageHandler : Closeable {
 
     suspend fun sendMessage(message: AbstractMessage)
 
-    fun receiveMessages(): SharedFlow<AbstractMessage>
+    fun receiveMessages(): Flow<AbstractMessage>
 
     val isAlive: Boolean
 }
@@ -44,14 +50,30 @@ internal class DefaultMessageHandler(
         private const val MAX_MESSAGE_SIZE = 512
     }
 
+    private sealed interface ReadState {
+        class Message(val value: AbstractMessage) : ReadState
+        object EOF : ReadState
+        class Error(val throwable: Throwable) : ReadState
+    }
+
     private val writeChannel = socket.openWriteChannel(autoFlush = true)
     private val readChannel = socket.openReadChannel()
 
-    private val receiveMessagesFlow: SharedFlow<AbstractMessage> = flow {
+    private val readStateFlow: SharedFlow<ReadState> = flow {
         while (true) {
-            readMessage().let {
-                if (LOG_READ) IrkLog("received $it")
-                emit(it)
+            try {
+                readMessage().let {
+                    if (LOG_READ) IrkLog("received $it")
+                    emit(ReadState.Message(it))
+                }
+            } catch (e: EOFException) {
+                emit(ReadState.EOF)
+                close()
+                break
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                emit(ReadState.Error(e))
             }
         }
     }.shareIn(CoroutineScope(socket.socketContext), SharingStarted.Lazily)
@@ -83,12 +105,15 @@ internal class DefaultMessageHandler(
             .let { writeChannel.writeFully(it.array) }
     }
 
-    override fun receiveMessages(): SharedFlow<AbstractMessage> {
-        return receiveMessagesFlow
+    override fun receiveMessages(): Flow<AbstractMessage> {
+        return readStateFlow
+            .takeWhile { it is ReadState.Message }
+            .filterIsInstance<ReadState.Message>()
+            .map { it.value }
     }
 
     override fun close() {
-        socket.close()
+        socket.socketContext.cancel()
     }
 
     override val isAlive: Boolean
