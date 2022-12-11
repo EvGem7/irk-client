@@ -1,6 +1,6 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
-internal class PasswordMessage(val password: String) : AbstractMessage(
+class PasswordMessage internal constructor(val password: String) : AbstractMessage(
     command = "PASS",
     trailingParam = password,
 ) {

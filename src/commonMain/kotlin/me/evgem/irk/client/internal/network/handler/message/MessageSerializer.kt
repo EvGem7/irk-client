@@ -10,7 +10,7 @@ import me.evgem.irk.client.internal.model.LF
 import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
 import me.evgem.irk.client.internal.model.NULL
 import me.evgem.irk.client.internal.model.SPACE
-import me.evgem.irk.client.internal.model.message.AbstractMessage
+import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.util.ByteArrayWrapper
 import me.evgem.irk.client.util.wrap
 

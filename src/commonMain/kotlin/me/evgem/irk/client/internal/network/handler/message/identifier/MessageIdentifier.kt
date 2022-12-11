@@ -1,11 +1,11 @@
 package me.evgem.irk.client.internal.network.handler.message.identifier
 
-import me.evgem.irk.client.internal.model.message.AbstractMessage
-import me.evgem.irk.client.internal.model.message.EmptyMessage
-import me.evgem.irk.client.internal.model.message.ReplyMessage
-import me.evgem.irk.client.internal.model.message.UnknownMessage
-import me.evgem.irk.client.internal.model.message.misc.MessageCommand
-import me.evgem.irk.client.internal.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.AbstractMessage
+import me.evgem.irk.client.model.message.EmptyMessage
+import me.evgem.irk.client.model.message.ReplyMessage
+import me.evgem.irk.client.model.message.UnknownMessage
+import me.evgem.irk.client.model.message.misc.MessageCommand
+import me.evgem.irk.client.model.message.misc.NumericReply
 
 internal interface MessageIdentifier {
     fun identify(message: UnknownMessage): AbstractMessage

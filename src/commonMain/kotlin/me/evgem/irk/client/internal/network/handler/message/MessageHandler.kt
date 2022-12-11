@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.takeWhile
 import me.evgem.irk.client.exception.IrkException
 import me.evgem.irk.client.internal.model.LF
-import me.evgem.irk.client.internal.model.message.AbstractMessage
+import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
 import me.evgem.irk.client.internal.util.Closeable
 import me.evgem.irk.client.util.IrkLog
@@ -43,7 +43,7 @@ internal class DefaultMessageHandler(
 ) : MessageHandler {
 
     companion object {
-        private const val LOG_RAW = false
+        private const val LOG_RAW = true
         private const val LOG_READ = true
         private const val LOG_WRITE = true
 

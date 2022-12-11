@@ -1,6 +1,6 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
-internal class UserMessage(
+class UserMessage internal constructor(
     val user: String,
     val mode: Int,
     val realName: String,

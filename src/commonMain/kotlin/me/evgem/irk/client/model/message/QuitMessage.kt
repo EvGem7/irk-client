@@ -1,6 +1,6 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
-internal class QuitMessage(
+class QuitMessage internal constructor(
     val quitMessage: String,
     val who: String? = null,
 ) : AbstractMessage(

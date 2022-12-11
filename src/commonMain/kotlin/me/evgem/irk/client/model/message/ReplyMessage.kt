@@ -1,8 +1,9 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
-import me.evgem.irk.client.internal.model.message.misc.NumericReply
+import me.evgem.irk.client.exception.ErrorReplyIrkException
+import me.evgem.irk.client.model.message.misc.NumericReply
 
-internal class ReplyMessage(
+class ReplyMessage internal constructor(
     val numericReply: NumericReply,
     val stringReply: String?,
 ) : AbstractMessage(
@@ -14,5 +15,11 @@ internal class ReplyMessage(
 
     override fun toString(): String {
         return "ReplyMessage(numericReply=$numericReply, stringReply=$stringReply)"
+    }
+}
+
+fun ReplyMessage.throwIfError() {
+    if (numericReply.isError) {
+        throw ErrorReplyIrkException(numericReply, stringReply)
     }
 }

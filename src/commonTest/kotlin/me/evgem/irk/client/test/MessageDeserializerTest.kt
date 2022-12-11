@@ -5,9 +5,9 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import me.evgem.irk.client.internal.model.message.AbstractMessage
-import me.evgem.irk.client.internal.model.message.EmptyMessage
-import me.evgem.irk.client.internal.model.message.UnknownMessage
+import me.evgem.irk.client.model.message.AbstractMessage
+import me.evgem.irk.client.model.message.EmptyMessage
+import me.evgem.irk.client.model.message.UnknownMessage
 import me.evgem.irk.client.internal.network.handler.message.MessageDeserializer
 import me.evgem.irk.client.util.wrap
 

@@ -4,7 +4,7 @@ import me.evgem.irk.client.internal.model.COLON
 import me.evgem.irk.client.internal.model.CR
 import me.evgem.irk.client.internal.model.MESSAGE_MAX_MIDDLE_PARAMS
 import me.evgem.irk.client.internal.model.SPACE
-import me.evgem.irk.client.internal.model.message.UnknownMessage
+import me.evgem.irk.client.model.message.UnknownMessage
 import me.evgem.irk.client.internal.util.split
 import me.evgem.irk.client.util.ByteArrayWrapper
 

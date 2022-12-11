@@ -1,16 +1,16 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
 import io.ktor.utils.io.core.toByteArray
 import me.evgem.irk.client.util.ByteArrayWrapper
 
-internal abstract class AbstractMessage(
-    val command: String,
-    val prefix: String? = null,
-    val middleParams: List<ByteArrayWrapper> = emptyList(),
-    val trailingParam: ByteArrayWrapper? = null,
+abstract class AbstractMessage internal constructor(
+    internal val command: String,
+    internal val prefix: String? = null,
+    internal val middleParams: List<ByteArrayWrapper> = emptyList(),
+    internal val trailingParam: ByteArrayWrapper? = null,
 ) {
 
-    constructor(
+    internal constructor(
         command: String,
         trailingParam: String?,
         prefix: String? = null,
@@ -22,7 +22,7 @@ internal abstract class AbstractMessage(
         trailingParam = trailingParam?.toByteArray()?.let(::ByteArrayWrapper),
     )
 
-    val allParams: List<ByteArrayWrapper> = middleParams + listOfNotNull(trailingParam)
+    internal val allParams: List<ByteArrayWrapper> = middleParams + listOfNotNull(trailingParam)
 
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true

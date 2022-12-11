@@ -1,9 +1,9 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
 import io.ktor.utils.io.core.toByteArray
 import me.evgem.irk.client.util.ByteArrayWrapper
 
-internal class UnknownMessage(
+class UnknownMessage internal constructor(
     command: String,
     prefix: String? = null,
     middleParams: List<ByteArrayWrapper> = emptyList(),
@@ -15,7 +15,7 @@ internal class UnknownMessage(
     trailingParam = trailingParam,
 ) {
 
-    constructor(
+    internal constructor(
         command: String,
         trailingParam: String?,
         prefix: String? = null,

@@ -1,4 +1,4 @@
-package me.evgem.irk.client.internal.model.message.misc
+package me.evgem.irk.client.model.message.misc
 
 enum class MessageCommand(val rfcName: String) {
     PASS("PASS"),

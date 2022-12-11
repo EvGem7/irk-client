@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeoutOrNull
 import me.evgem.irk.client.exception.LoginIrkException
 import me.evgem.irk.client.internal.di.IrkClientComponent
-import me.evgem.irk.client.internal.model.message.NickMessage
-import me.evgem.irk.client.internal.model.message.PasswordMessage
-import me.evgem.irk.client.internal.model.message.ReplyMessage
-import me.evgem.irk.client.internal.model.message.UserMessage
-import me.evgem.irk.client.internal.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.NickMessage
+import me.evgem.irk.client.model.message.PasswordMessage
+import me.evgem.irk.client.model.message.ReplyMessage
+import me.evgem.irk.client.model.message.UserMessage
+import me.evgem.irk.client.model.message.misc.NumericReply
 import me.evgem.irk.client.internal.network.handler.message.MessageHandler
 import me.evgem.irk.client.internal.network.handler.message.MessageHandlerFactory
 import me.evgem.irk.client.internal.util.orElse

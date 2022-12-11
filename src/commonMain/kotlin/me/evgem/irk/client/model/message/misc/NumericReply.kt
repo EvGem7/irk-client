@@ -1,4 +1,4 @@
-package me.evgem.irk.client.internal.model.message.misc
+package me.evgem.irk.client.model.message.misc
 
 enum class NumericReply(val code: Int) {
     RPL_WELCOME(1),

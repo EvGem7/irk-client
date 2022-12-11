@@ -5,7 +5,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
-import me.evgem.irk.client.internal.model.message.UnknownMessage
+import me.evgem.irk.client.model.message.UnknownMessage
 import me.evgem.irk.client.internal.network.handler.message.MessageSerializer
 import me.evgem.irk.client.util.wrap
 

@@ -1,6 +1,6 @@
-package me.evgem.irk.client.internal.model.message
+package me.evgem.irk.client.model.message
 
-internal class NickMessage(val nickname: String) : AbstractMessage(
+class NickMessage internal constructor(val nickname: String) : AbstractMessage(
     command = "NICK",
     trailingParam = nickname,
 ) {
