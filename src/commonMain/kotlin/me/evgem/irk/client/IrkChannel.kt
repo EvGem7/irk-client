@@ -13,6 +13,10 @@ class IrkChannel internal constructor(
     private val _users = users.toMutableSet()
     val users: Set<User> get() = _users.toSet()
 
+    suspend fun part() {
+        server.part(name)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is IrkChannel) return false
