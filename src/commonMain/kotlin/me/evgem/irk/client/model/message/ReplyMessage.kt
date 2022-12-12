@@ -19,6 +19,10 @@ class ReplyMessage internal constructor(
     trailingParam = trailingParam,
 ) {
 
+    val target: String = middleParams.firstOrNull()?.toString().orEmpty()
+    val replyParams: List<ByteArrayWrapper> = allParams.drop(1)
+    val replyStringParams: List<String> = allStringParams.drop(1)
+
     override fun toString(): String {
         return "ReplyMessage(numericReply=$numericReply, allParams=$allParams)"
     }
@@ -28,7 +32,8 @@ fun AbstractMessage.throwIfError() {
     if (this is ReplyMessage && numericReply.isError) {
         throw ErrorReplyIrkException(
             numericReply = numericReply,
-            description = allStringParams.lastOrNull().orEmpty(),
+            description = replyStringParams.lastOrNull().orEmpty(),
+            target = target,
         )
     }
 }

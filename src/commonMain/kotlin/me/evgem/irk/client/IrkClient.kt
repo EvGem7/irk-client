@@ -108,11 +108,11 @@ class IrkClient(
                     }
                     when (message.numericReply) {
                         KnownNumericReply.RPL_WELCOME -> {
-                            welcomeMessage = message.allStringParams.lastOrNull().orEmpty()
+                            welcomeMessage = message.replyStringParams.firstOrNull().orEmpty()
                         }
 
                         KnownNumericReply.RPL_MOTDSTART, KnownNumericReply.RPL_MOTD, KnownNumericReply.RPL_ENDOFMOTD -> {
-                            message.allStringParams.lastOrNull()?.let {
+                            message.replyStringParams.firstOrNull()?.let {
                                 motdBuilder.append(it)
                                 motdBuilder.append('\n')
                             }

@@ -57,12 +57,12 @@ class IrkServer internal constructor(
         val users = mutableSetOf<User>()
         return transform { message ->
             if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_TOPIC) {
-                name = message.allStringParams.run { getOrNull(lastIndex - 1) }.orEmpty()
-                topic = message.allStringParams.run { getOrNull(lastIndex - 0) }.orEmpty()
+                name = message.replyStringParams.getOrNull(0).orEmpty()
+                topic = message.replyStringParams.getOrNull(1).orEmpty()
             }
             if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_NAMREPLY) {
                 users += message
-                    .allStringParams
+                    .replyStringParams
                     .lastOrNull()
                     .orEmpty()
                     .splitToSequence(' ')

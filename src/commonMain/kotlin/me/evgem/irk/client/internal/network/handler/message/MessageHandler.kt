@@ -45,8 +45,8 @@ internal class DefaultMessageHandler(
 
     companion object {
         private const val LOG_RAW = false
-        private const val LOG_READ = true
-        private const val LOG_WRITE = true
+        private const val LOG_READ = false
+        private const val LOG_WRITE = false
 
         private const val MAX_MESSAGE_SIZE = 512
     }
