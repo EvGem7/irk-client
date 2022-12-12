@@ -12,6 +12,7 @@ import me.evgem.irk.client.internal.di.IrkClientComponent
 import me.evgem.irk.client.internal.network.handler.message.MessageHandler
 import me.evgem.irk.client.internal.network.handler.message.MessageHandlerFactory
 import me.evgem.irk.client.internal.util.orElse
+import me.evgem.irk.client.model.User
 import me.evgem.irk.client.model.message.NickMessage
 import me.evgem.irk.client.model.message.PasswordMessage
 import me.evgem.irk.client.model.message.ReplyMessage
@@ -52,6 +53,7 @@ class IrkClient(
             motd = motd,
             hostname = hostname,
             port = port,
+            me = User.fromNick(nickname),
         )
     }
 
@@ -76,6 +78,7 @@ class IrkClient(
             motd = motd,
             hostname = address.hostname,
             port = address.port,
+            me = User.fromNick(nickname),
         )
     }
 

@@ -19,6 +19,7 @@ internal class JoinMessageFactory : MessageFactory<JoinMessage> {
         return JoinMessage(
             channels = lists.getOrElse(0) { emptyList() },
             keys = lists.getOrElse(1) { emptyList() },
+            prefix = unknownMessage.prefix,
         )
     }
 }
