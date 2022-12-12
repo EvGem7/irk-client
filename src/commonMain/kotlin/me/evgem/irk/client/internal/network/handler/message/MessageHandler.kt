@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.takeWhile
 import me.evgem.irk.client.exception.IrkException
@@ -110,6 +111,7 @@ internal class DefaultMessageHandler(
 
     override fun receiveMessages(): Flow<AbstractMessage> {
         return readStateFlow
+            .onEach { if (it is ReadState.Error) throw it.throwable }
             .takeWhile { it is ReadState.Message }
             .filterIsInstance<ReadState.Message>()
             .map { it.value }

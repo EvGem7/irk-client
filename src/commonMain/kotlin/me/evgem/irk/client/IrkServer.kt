@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.evgem.irk.client.internal.Scoped
@@ -39,6 +39,18 @@ class IrkServer internal constructor(
     private val channels = mutableMapOf<String, IrkChannel>()
     private val channelsMutex = Mutex()
 
+    init {
+        collectPartMessages()
+    }
+
+    private fun collectPartMessages() {
+        coroutineScope.launch {
+            receivePartMessages(withLock = true).collect()
+        }
+    }
+
+    suspend fun getChannels(): Set<IrkChannel> = channelsMutex.withLock { channels.values.toSet() }
+
     val messages: Flow<AbstractMessage> get() = messageHandler.receiveMessages()
 
     suspend fun quit(quitMessage: String = "") {
@@ -46,32 +58,56 @@ class IrkServer internal constructor(
     }
 
     suspend fun joinChannels(channels: Sequence<ChannelNameWithKey>): List<IrkChannel> = channelsMutex.withLock {
-        val names = channels.map { it.channelName }.toList()
-        val keys = channels.mapNotNull { it.key }.toList()
-        messageHandler.sendMessage(JoinMessage(names, keys))
-        return messageHandler
-            .receiveMessages()
-            .onEach { it.throwIfError() }
-            .transformToChannel()
-            .take(names.size)
-            .onEach { this.channels[it.name] = it }
-            .toList()
+        val withoutJoined = channels.filter { !this.channels.containsKey(it.channelName) }
+        val names = withoutJoined.map { it.channelName }.toList()
+        val keys = withoutJoined.mapNotNull { it.key }.toList()
+        if (names.isNotEmpty()) {
+            messageHandler.sendMessage(JoinMessage(names, keys))
+            messageHandler
+                .receiveMessages()
+                .onEach { it.throwIfError() }
+                .transformToChannel()
+                .take(names.size)
+                .collect { this.channels[it.name] = it }
+        }
+        channels.mapNotNull { this.channels[it.channelName] }.toList()
     }
 
     suspend fun partAll(): Unit = channelsMutex.withLock {
         messageHandler.sendMessage(PartAllMessage)
-        messageHandler
+        receivePartMessages(withLock = false)
+            .takeWhile { this.channels.isNotEmpty() }
+            .collect()
+    }
+
+    suspend fun partWithMessage(message: String?, vararg channelNames: String): Unit = channelsMutex.withLock {
+        if (channelNames.isEmpty()) {
+            return@withLock
+        }
+        PartMessage(
+            channels = channelNames.toList(),
+            partMessage = message,
+        ).let { messageHandler.sendMessage(it) }
+        val set = channelNames.toMutableSet()
+        receivePartMessages(withLock = false).takeWhile {
+            it.channels.forEach(set::remove)
+            set.isNotEmpty()
+        }.collect()
+    }
+
+    private fun receivePartMessages(withLock: Boolean): Flow<PartMessage> {
+        return messageHandler
             .receiveMessages()
             .onEach { it.throwIfError() }
             .filterIsInstance<PartMessage>()
             .filter { it.user == me }
-            .takeWhile { message ->
+            .onEach { message ->
+                if (withLock) channelsMutex.lock()
                 message.channels.forEach {
                     this.channels.remove(it)
                 }
-                this.channels.isNotEmpty()
+                if (withLock) channelsMutex.unlock()
             }
-            .collect()
     }
 
     private fun Flow<AbstractMessage>.transformToChannel(): Flow<IrkChannel> {
@@ -125,7 +161,7 @@ class IrkServer internal constructor(
     }
 
     override fun toString(): String {
-        return "IrkServer(hostname='$hostname', port=$port, welcomeMessage='$welcomeMessage', motd='$motd')"
+        return "IrkServer(hostname='$hostname', port=$port)"
     }
 }
 
@@ -156,4 +192,8 @@ suspend fun IrkServer.joinChannelsByName(channels: Iterable<String>): List<IrkCh
 
 suspend fun IrkServer.joinChannels(channels: Iterable<ChannelNameWithKey>): List<IrkChannel> {
     return joinChannels(channels.asSequence())
+}
+
+suspend fun IrkServer.part(vararg channelNames: String) {
+    partWithMessage(message = null, channelNames = channelNames)
 }
