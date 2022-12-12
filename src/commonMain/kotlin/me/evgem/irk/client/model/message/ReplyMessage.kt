@@ -2,6 +2,7 @@ package me.evgem.irk.client.model.message
 
 import me.evgem.irk.client.exception.ErrorReplyIrkException
 import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.misc.isError
 import me.evgem.irk.client.util.ByteArrayWrapper
 
 class ReplyMessage internal constructor(

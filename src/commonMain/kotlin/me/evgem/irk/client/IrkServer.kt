@@ -13,7 +13,7 @@ import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.model.message.JoinMessage
 import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
-import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.misc.KnownNumericReply
 import me.evgem.irk.client.model.message.throwIfError
 
 class IrkServer internal constructor(
@@ -56,11 +56,11 @@ class IrkServer internal constructor(
         var topic = ""
         val users = mutableSetOf<User>()
         return transform { message ->
-            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_TOPIC) {
+            if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_TOPIC) {
                 name = message.allStringParams.run { getOrNull(lastIndex - 1) }.orEmpty()
                 topic = message.allStringParams.run { getOrNull(lastIndex - 0) }.orEmpty()
             }
-            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_NAMREPLY) {
+            if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_NAMREPLY) {
                 users += message
                     .allStringParams
                     .lastOrNull()
@@ -69,7 +69,7 @@ class IrkServer internal constructor(
                     .filter { it.isNotBlank() }
                     .map { User.fromNameReply(it) }
             }
-            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_ENDOFNAMES) {
+            if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_ENDOFNAMES) {
                 IrkChannel(
                     server = this@IrkServer,
                     name = name,

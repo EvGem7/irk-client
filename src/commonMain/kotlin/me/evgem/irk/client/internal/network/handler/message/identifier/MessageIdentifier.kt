@@ -1,11 +1,13 @@
 package me.evgem.irk.client.internal.network.handler.message.identifier
 
+import me.evgem.irk.client.internal.util.orElse
 import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.model.message.EmptyMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.UnknownMessage
+import me.evgem.irk.client.model.message.misc.KnownNumericReply
 import me.evgem.irk.client.model.message.misc.MessageCommand
-import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.misc.UnknownNumericReply
 
 internal interface MessageIdentifier {
     fun identify(message: UnknownMessage): AbstractMessage
@@ -19,7 +21,7 @@ private class DefaultMessageIdentifier(
 ) : MessageIdentifier {
 
     private val commandsMap: Map<String, MessageCommand> = MessageCommand.values().associateBy { it.rfcName }
-    private val numericRepliesMap: Map<Int, NumericReply> = NumericReply.values().associateBy { it.code }
+    private val numericRepliesMap: Map<Int, KnownNumericReply> = KnownNumericReply.values().associateBy { it.code }
     private val messageFactoriesMap: Map<MessageCommand, MessageFactory<*>> =
         messageFactories.associateBy { it.messageCommand }
 
@@ -27,7 +29,8 @@ private class DefaultMessageIdentifier(
         if (message.command.isEmpty()) {
             return EmptyMessage
         }
-        message.command.toIntOrNull()?.let(numericRepliesMap::get)?.let { numericReply ->
+        message.command.toIntOrNull()?.let { code ->
+            val numericReply = numericRepliesMap[code].orElse { UnknownNumericReply(code) }
             return ReplyMessage(
                 numericReply = numericReply,
                 prefix = message.prefix,

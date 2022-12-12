@@ -8,7 +8,7 @@ import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.UnknownMessage
 import me.evgem.irk.client.model.message.UserMessage
-import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.misc.KnownNumericReply
 
 class MessageConstructionTest {
 
@@ -44,6 +44,6 @@ class MessageConstructionTest {
 
     @Test
     fun `reply message`() {
-        ReplyMessage(NumericReply.RPL_WELCOME)
+        ReplyMessage(KnownNumericReply.RPL_WELCOME)
     }
 }

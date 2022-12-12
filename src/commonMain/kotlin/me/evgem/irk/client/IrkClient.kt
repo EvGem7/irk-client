@@ -16,7 +16,8 @@ import me.evgem.irk.client.model.message.NickMessage
 import me.evgem.irk.client.model.message.PasswordMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.UserMessage
-import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.misc.KnownNumericReply
+import me.evgem.irk.client.model.message.misc.isError
 
 class IrkClient(
     workCoroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -106,11 +107,11 @@ class IrkClient(
                         )
                     }
                     when (message.numericReply) {
-                        NumericReply.RPL_WELCOME -> {
+                        KnownNumericReply.RPL_WELCOME -> {
                             welcomeMessage = message.allStringParams.lastOrNull().orEmpty()
                         }
 
-                        NumericReply.RPL_MOTDSTART, NumericReply.RPL_MOTD, NumericReply.RPL_ENDOFMOTD -> {
+                        KnownNumericReply.RPL_MOTDSTART, KnownNumericReply.RPL_MOTD, KnownNumericReply.RPL_ENDOFMOTD -> {
                             message.allStringParams.lastOrNull()?.let {
                                 motdBuilder.append(it)
                                 motdBuilder.append('\n')
@@ -121,7 +122,7 @@ class IrkClient(
 
                     }
                 }
-                .first { it.numericReply == NumericReply.RPL_ENDOFMOTD }
+                .first { it.numericReply == KnownNumericReply.RPL_ENDOFMOTD }
         }.orElse { throw LoginIrkException("Login timeout exceeded.") }
         return welcomeMessage to motdBuilder.toString()
     }

@@ -1,6 +1,15 @@
 package me.evgem.irk.client.model.message.misc
 
-enum class NumericReply(val code: Int) {
+sealed interface NumericReply {
+    val code: Int
+}
+
+val NumericReply.isReply: Boolean get() = code in 1..399
+val NumericReply.isError: Boolean get() = code in 400..599
+
+data class UnknownNumericReply(override val code: Int) : NumericReply
+
+enum class KnownNumericReply(override val code: Int) : NumericReply {
     RPL_WELCOME(1),
     RPL_YOURHOST(2),
     RPL_CREATED(3),
@@ -162,8 +171,4 @@ enum class NumericReply(val code: Int) {
     ERR_NOSERVICEHOST(492),
     ERR_UMODEUNKNOWNFLAG(501),
     ERR_USERSDONTMATCH(502),
-    ;
-
-    val isReply: Boolean = code in 1..399
-    val isError: Boolean = code in 400..599
 }
