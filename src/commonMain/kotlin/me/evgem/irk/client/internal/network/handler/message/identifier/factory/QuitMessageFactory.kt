@@ -13,7 +13,6 @@ internal class QuitMessageFactory : MessageFactory<QuitMessage> {
     override fun create(unknownMessage: UnknownMessage): QuitMessage {
         return QuitMessage(
             quitMessage = unknownMessage.trailingParam?.toString().orEmpty(),
-            who = unknownMessage.prefix,
         )
     }
 }

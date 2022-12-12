@@ -7,6 +7,7 @@ import me.evgem.irk.client.internal.network.handler.message.MessageHandlerFactor
 import me.evgem.irk.client.internal.network.handler.message.MessageSerializer
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageFactory
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
+import me.evgem.irk.client.internal.network.handler.message.identifier.factory.JoinMessageFactory
 import me.evgem.irk.client.internal.network.handler.message.identifier.factory.QuitMessageFactory
 
 internal class IrkClientComponent(
@@ -30,6 +31,7 @@ internal class IrkClientComponent(
     fun messageFactories(): List<MessageFactory<*>> = single("message factories list") {
         listOf(
             QuitMessageFactory(),
+            JoinMessageFactory(),
         )
     }
 }

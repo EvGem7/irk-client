@@ -3,6 +3,7 @@ package me.evgem.irk.client.model.message
 class JoinMessage internal constructor(
     val channels: List<String>,
     val keys: List<String>,
+    prefix: String? = null,
 ) : AbstractMessage(
     command = "JOIN",
     middleParams = listOfNotNull(
@@ -10,6 +11,7 @@ class JoinMessage internal constructor(
         pack(keys)
     ),
     trailingParam = null,
+    prefix = prefix,
 ) {
 
     companion object {
@@ -19,6 +21,6 @@ class JoinMessage internal constructor(
     }
 
     override fun toString(): String {
-        return "JoinMessage(channels=$channels, keys=$keys)"
+        return "JoinMessage(channels=$channels, keys=$keys, user=$user)"
     }
 }

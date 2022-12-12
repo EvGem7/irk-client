@@ -2,14 +2,14 @@ package me.evgem.irk.client.model.message
 
 class QuitMessage internal constructor(
     val quitMessage: String,
-    val who: String? = null,
+    prefix: String? = null,
 ) : AbstractMessage(
     command = "QUIT",
     trailingParam = quitMessage,
-    prefix = who,
+    prefix = prefix,
 ) {
 
     override fun toString(): String {
-        return "QuitMessage(quitMessage='$quitMessage', who=$who)"
+        return "QuitMessage(quitMessage='$quitMessage', user=$user)"
     }
 }

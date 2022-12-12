@@ -1,5 +1,6 @@
 package me.evgem.irk.client.test
 
+import io.ktor.utils.io.core.toByteArray
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -7,6 +8,7 @@ import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.UnknownMessage
 import me.evgem.irk.client.model.message.misc.NumericReply
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
+import me.evgem.irk.client.util.wrap
 
 class MessageIdentifierTest {
 
@@ -26,7 +28,7 @@ class MessageIdentifierTest {
         val actual = identifier.identify(unknownMessage)
         val expected = ReplyMessage(
             numericReply = NumericReply.RPL_WELCOME,
-            stringReply = "Welcome",
+            trailingParam = "Welcome".toByteArray().wrap(),
         )
         assertEquals(expected, actual)
     }
@@ -40,7 +42,7 @@ class MessageIdentifierTest {
         val actual = identifier.identify(unknownMessage)
         val expected = ReplyMessage(
             numericReply = NumericReply.ERR_ALREADYREGISTRED,
-            stringReply = "ERR_ALREADYREGISTRED",
+            trailingParam = "ERR_ALREADYREGISTRED".toByteArray().wrap(),
         )
         assertEquals(expected, actual)
     }

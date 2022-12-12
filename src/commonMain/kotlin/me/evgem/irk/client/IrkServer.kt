@@ -1,27 +1,26 @@
 package me.evgem.irk.client
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.transform
+import me.evgem.irk.client.internal.Scoped
 import me.evgem.irk.client.internal.network.handler.message.MessageHandler
 import me.evgem.irk.client.model.ChannelNameWithKey
+import me.evgem.irk.client.model.User
 import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.model.message.JoinMessage
-import me.evgem.irk.client.model.message.PartAllMessage
 import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.misc.NumericReply
-import me.evgem.irk.client.model.message.throwIfError
 
 class IrkServer internal constructor(
     internal val messageHandler: MessageHandler,
+    val hostname: String,
+    val port: Int,
     val welcomeMessage: String,
     motd: String,
-) {
+) : Scoped by messageHandler {
 
     var motd: String = motd
         private set
@@ -38,27 +37,52 @@ class IrkServer internal constructor(
         messageHandler.sendMessage(JoinMessage(names, keys))
         return messageHandler
             .receiveMessages()
-            .filterIsInstance<ReplyMessage>()
-            .onEach { it.throwIfError() }
-            .filter { it.numericReply == NumericReply.RPL_TOPIC }
+            .transformToChannel()
             .take(names.size)
-            .map { topicMessage -> createChannel(topicMessage) }
             .toList()
     }
 
-    private fun createChannel(topicMessage: ReplyMessage): IrkChannel {
-        return IrkChannel(
-            server = this,
-            topic = topicMessage.trailingParam?.toString().orEmpty(),
-            name = topicMessage.middleParams.firstOrNull()?.toString().orEmpty(),
-        )
-    }
-
-//    not working at irc.ppy.sh
+//    not working at irc.ppy.sh, can't debug
 //    suspend fun partAll() {
 //        messageHandler.sendMessage(PartAllMessage)
 //        messageHandler.receiveMessages()
 //    }
+
+    private fun Flow<AbstractMessage>.transformToChannel(): Flow<IrkChannel> {
+        var name = ""
+        var topic = ""
+        val users = mutableSetOf<User>()
+        return transform { message ->
+            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_TOPIC) {
+                name = message.allStringParams.run { getOrNull(lastIndex - 1) }.orEmpty()
+                topic = message.allStringParams.run { getOrNull(lastIndex - 0) }.orEmpty()
+            }
+            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_NAMREPLY) {
+                users += message
+                    .allStringParams
+                    .lastOrNull()
+                    .orEmpty()
+                    .splitToSequence(' ')
+                    .filter { it.isNotBlank() }
+                    .map { User.fromNameReply(it) }
+            }
+            if (message is ReplyMessage && message.numericReply == NumericReply.RPL_ENDOFNAMES) {
+                IrkChannel(
+                    server = this@IrkServer,
+                    name = name,
+                    topic = topic,
+                    users = users,
+                ).let { emit(it) }
+                name = ""
+                topic = ""
+                users.clear()
+            }
+        }
+    }
+
+    override fun toString(): String {
+        return "IrkServer(hostname='$hostname', port=$port, welcomeMessage='$welcomeMessage', motd='$motd')"
+    }
 }
 
 suspend fun IrkServer.joinChannel(channelName: String, key: String? = null): IrkChannel {

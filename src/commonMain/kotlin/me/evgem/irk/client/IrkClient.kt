@@ -1,6 +1,6 @@
 package me.evgem.irk.client
 
-import io.ktor.network.sockets.SocketAddress
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeoutOrNull
 import me.evgem.irk.client.exception.LoginIrkException
 import me.evgem.irk.client.internal.di.IrkClientComponent
+import me.evgem.irk.client.internal.network.handler.message.MessageHandler
+import me.evgem.irk.client.internal.network.handler.message.MessageHandlerFactory
+import me.evgem.irk.client.internal.util.orElse
 import me.evgem.irk.client.model.message.NickMessage
 import me.evgem.irk.client.model.message.PasswordMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.UserMessage
 import me.evgem.irk.client.model.message.misc.NumericReply
-import me.evgem.irk.client.internal.network.handler.message.MessageHandler
-import me.evgem.irk.client.internal.network.handler.message.MessageHandlerFactory
-import me.evgem.irk.client.internal.util.orElse
 
 class IrkClient(
     workCoroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -45,11 +45,17 @@ class IrkClient(
             realName = realName,
             password = password,
         )
-        return IrkServer(messageHandler = handler, welcomeMessage = welcomeMessage, motd = motd)
+        return IrkServer(
+            messageHandler = handler,
+            welcomeMessage = welcomeMessage,
+            motd = motd,
+            hostname = hostname,
+            port = port,
+        )
     }
 
     suspend fun connectServer(
-        address: SocketAddress,
+        address: InetSocketAddress,
         nickname: String,
         username: String = nickname,
         realName: String = nickname,
@@ -63,7 +69,13 @@ class IrkClient(
             realName = realName,
             password = password,
         )
-        return IrkServer(messageHandler = handler, welcomeMessage = welcomeMessage, motd = motd)
+        return IrkServer(
+            messageHandler = handler,
+            welcomeMessage = welcomeMessage,
+            motd = motd,
+            hostname = address.hostname,
+            port = address.port,
+        )
     }
 
     /**
@@ -78,7 +90,7 @@ class IrkClient(
     ): Pair<String, String> {
         password?.let { handler.sendMessage(PasswordMessage(password)) }
         handler.sendMessage(NickMessage(nickname))
-        handler.sendMessage(UserMessage(user = username, mode = 0, realName = realName))
+        handler.sendMessage(UserMessage(username = username, mode = 0, realName = realName))
         var welcomeMessage = ""
         val motdBuilder = StringBuilder()
         withTimeoutOrNull(LOGIN_TIMEOUT_MS) {
@@ -88,18 +100,18 @@ class IrkClient(
                 .onEach { message ->
                     if (message.numericReply.isError) {
                         throw LoginIrkException(
-                            message = "code=${message.numericReply.code} ${message.stringReply.orEmpty()}",
+                            message = message.toString(),
                             welcomeMessage = welcomeMessage,
                             motd = motdBuilder.toString(),
                         )
                     }
                     when (message.numericReply) {
                         NumericReply.RPL_WELCOME -> {
-                            welcomeMessage = message.stringReply.orEmpty()
+                            welcomeMessage = message.allStringParams.lastOrNull().orEmpty()
                         }
 
                         NumericReply.RPL_MOTDSTART, NumericReply.RPL_MOTD, NumericReply.RPL_ENDOFMOTD -> {
-                            message.stringReply?.let {
+                            message.allStringParams.lastOrNull()?.let {
                                 motdBuilder.append(it)
                                 motdBuilder.append('\n')
                             }

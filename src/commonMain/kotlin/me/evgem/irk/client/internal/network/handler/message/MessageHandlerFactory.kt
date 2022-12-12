@@ -1,15 +1,15 @@
 package me.evgem.irk.client.internal.network.handler.message
 
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.SocketAddress
 import io.ktor.network.sockets.TcpSocketBuilder
 import io.ktor.network.sockets.aSocket
 import me.evgem.irk.client.internal.network.handler.message.identifier.MessageIdentifier
 
 internal interface MessageHandlerFactory {
 
-    suspend fun createMessageHandler(remoteAddress: SocketAddress): MessageHandler
+    suspend fun createMessageHandler(remoteAddress: InetSocketAddress): MessageHandler
 
     suspend fun createMessageHandler(hostname: String, port: Int): MessageHandler
 }
@@ -30,7 +30,7 @@ private class DefaultMessageHandlerFactory(
     private val messageIdentifier: MessageIdentifier,
 ) : MessageHandlerFactory {
 
-    override suspend fun createMessageHandler(remoteAddress: SocketAddress): MessageHandler {
+    override suspend fun createMessageHandler(remoteAddress: InetSocketAddress): MessageHandler {
         return via { connect(remoteAddress) }
     }
 

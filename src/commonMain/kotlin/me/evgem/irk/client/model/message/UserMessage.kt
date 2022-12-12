@@ -1,21 +1,21 @@
 package me.evgem.irk.client.model.message
 
 class UserMessage internal constructor(
-    val user: String,
+    val username: String,
     val mode: Int,
     val realName: String,
     val unused: String = "*",
 ) : AbstractMessage(
     command = "USER",
     trailingParam = realName,
-    middleParams = listOf(user, mode.toString(), unused),
+    middleParams = listOf(username, mode.toString(), unused),
 ) {
 
     init {
-        require(!user.contains(' '))
+        require(!username.contains(' '))
     }
 
     override fun toString(): String {
-        return "UserMessage(user='$user', mode=$mode, realName='$realName', unused='$unused')"
+        return "UserMessage(user='$username', mode=$mode, realName='$realName', unused='$unused')"
     }
 }
