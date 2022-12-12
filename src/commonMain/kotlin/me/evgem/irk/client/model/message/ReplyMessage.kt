@@ -23,8 +23,11 @@ class ReplyMessage internal constructor(
     }
 }
 
-fun ReplyMessage.throwIfError() {
-    if (numericReply.isError) {
-        throw ErrorReplyIrkException(this)
+fun AbstractMessage.throwIfError() {
+    if (this is ReplyMessage && numericReply.isError) {
+        throw ErrorReplyIrkException(
+            numericReply = numericReply,
+            description = allStringParams.lastOrNull().orEmpty(),
+        )
     }
 }

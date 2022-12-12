@@ -1,6 +1,7 @@
 package me.evgem.irk.client
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transform
@@ -13,6 +14,7 @@ import me.evgem.irk.client.model.message.JoinMessage
 import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.misc.NumericReply
+import me.evgem.irk.client.model.message.throwIfError
 
 class IrkServer internal constructor(
     internal val messageHandler: MessageHandler,
@@ -37,6 +39,7 @@ class IrkServer internal constructor(
         messageHandler.sendMessage(JoinMessage(names, keys))
         return messageHandler
             .receiveMessages()
+            .onEach { it.throwIfError() }
             .transformToChannel()
             .take(names.size)
             .toList()
