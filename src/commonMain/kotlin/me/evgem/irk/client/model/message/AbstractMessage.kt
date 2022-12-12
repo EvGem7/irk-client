@@ -33,7 +33,7 @@ abstract class AbstractMessage internal constructor(
         ?.let { prefix.substring(0, it) }
         ?.let(User::fromNick)
 
-    override fun equals(other: Any?): Boolean {
+    final override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is AbstractMessage) return false
 
@@ -44,7 +44,7 @@ abstract class AbstractMessage internal constructor(
         return true
     }
 
-    override fun hashCode(): Int {
+    final override fun hashCode(): Int {
         var result = command.hashCode()
         result = 31 * result + (prefix?.hashCode() ?: 0)
         result = 31 * result + allParams.hashCode()
