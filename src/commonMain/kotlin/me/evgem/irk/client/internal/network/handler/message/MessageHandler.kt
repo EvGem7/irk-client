@@ -49,7 +49,7 @@ internal class DefaultMessageHandler(
         private const val LOG_READ = false
         private const val LOG_WRITE = false
 
-        private const val MAX_MESSAGE_SIZE = 512
+        private const val MAX_MESSAGE_SIZE = 1024
     }
 
     private sealed interface ReadState {

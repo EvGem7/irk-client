@@ -70,7 +70,7 @@ class IrkServer internal constructor(
 
     suspend fun joinChannels(channels: Sequence<ChannelNameWithKey>): List<IrkChannel> = channelsMutex.withLock {
         val withoutJoined = channels.filter { !this.channels.containsKey(it.channelName) }
-        val names = withoutJoined.map { it.channelName.value }.toList()
+        val names = withoutJoined.map { it.channelName.toString() }.toList()
         val keys = withoutJoined.mapNotNull { it.key }.toList()
         if (names.isNotEmpty()) {
             messageHandler.sendMessage(JoinMessage(names, keys))
@@ -96,7 +96,7 @@ class IrkServer internal constructor(
             return@withLock
         }
         PartMessage(
-            channels = channelNames.asSequence().map { it.value }.toList(),
+            channels = channelNames.asSequence().map { it.toString() }.toList(),
             partMessage = message,
         ).let { messageHandler.sendMessage(it) }
         val set = channelNames.toMutableSet()

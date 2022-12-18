@@ -28,6 +28,12 @@ class IrkClient(
         private const val LOGIN_TIMEOUT_MS = 10_000L
     }
 
+    private data class LoginResponse(
+        val welcomeMessage: String,
+        val motd: String,
+        val loggedUsername: String,
+    )
+
     private val component = IrkClientComponent(workCoroutineDispatcher)
     private val messageHandlerFactory: MessageHandlerFactory = component.messageHandlerFactory()
 
@@ -40,7 +46,7 @@ class IrkClient(
         password: String? = null,
     ): IrkServer {
         val handler = messageHandlerFactory.createMessageHandler(hostname, port)
-        val (welcomeMessage, motd) = login(
+        val (welcomeMessage, motd, loggedUsername) = login(
             handler = handler,
             nickname = nickname,
             username = username,
@@ -53,7 +59,7 @@ class IrkClient(
             motd = motd,
             hostname = hostname,
             port = port,
-            me = User.fromNick(nickname),
+            me = User.fromNick(loggedUsername),
         )
     }
 
@@ -65,7 +71,7 @@ class IrkClient(
         password: String? = null,
     ): IrkServer {
         val handler = messageHandlerFactory.createMessageHandler(address)
-        val (welcomeMessage, motd) = login(
+        val (welcomeMessage, motd, loggedUsername) = login(
             handler = handler,
             nickname = nickname,
             username = username,
@@ -78,7 +84,7 @@ class IrkClient(
             motd = motd,
             hostname = address.hostname,
             port = address.port,
-            me = User.fromNick(nickname),
+            me = User.fromNick(loggedUsername),
         )
     }
 
@@ -91,12 +97,13 @@ class IrkClient(
         username: String,
         realName: String,
         password: String?,
-    ): Pair<String, String> {
+    ): LoginResponse {
         password?.let { handler.sendMessage(PasswordMessage(password)) }
         handler.sendMessage(NickMessage(nickname))
         handler.sendMessage(UserMessage(username = username, mode = 0, realName = realName))
         var welcomeMessage = ""
         val motdBuilder = StringBuilder()
+        var loggedUsername = ""
         withTimeoutOrNull(LOGIN_TIMEOUT_MS) {
             handler
                 .receiveMessages()
@@ -112,6 +119,7 @@ class IrkClient(
                     when (message.numericReply) {
                         KnownNumericReply.RPL_WELCOME -> {
                             welcomeMessage = message.replyStringParams.firstOrNull().orEmpty()
+                            loggedUsername = message.target
                         }
 
                         KnownNumericReply.RPL_MOTDSTART, KnownNumericReply.RPL_MOTD, KnownNumericReply.RPL_ENDOFMOTD -> {
@@ -127,6 +135,10 @@ class IrkClient(
                 }
                 .first { it.numericReply == KnownNumericReply.RPL_ENDOFMOTD }
         }.orElse { throw LoginIrkException("Login timeout exceeded.") }
-        return welcomeMessage to motdBuilder.toString()
+        return LoginResponse(
+            welcomeMessage = welcomeMessage,
+            motd = motdBuilder.toString(),
+            loggedUsername = loggedUsername,
+        )
     }
 }
