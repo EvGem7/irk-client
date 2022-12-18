@@ -24,7 +24,7 @@ abstract class AbstractMessage internal constructor(
     )
 
     internal val allParams: List<ByteArrayWrapper> = middleParams + listOfNotNull(trailingParam)
-    internal val allStringParams: List<String> get() = allParams.map(ByteArrayWrapper::toString)
+    internal val allStringParams: List<String> = allParams.map(ByteArrayWrapper::toString)
 
     val user: User? = prefix
         ?.takeIf { it.isNotBlank() }

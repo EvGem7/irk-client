@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.takeWhile
@@ -20,6 +21,8 @@ import me.evgem.irk.client.model.message.AbstractMessage
 import me.evgem.irk.client.model.message.JoinMessage
 import me.evgem.irk.client.model.message.PartAllMessage
 import me.evgem.irk.client.model.message.PartMessage
+import me.evgem.irk.client.model.message.PingMessage
+import me.evgem.irk.client.model.message.PongMessage
 import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.misc.KnownNumericReply
@@ -42,6 +45,13 @@ class IrkServer internal constructor(
 
     init {
         collectPartMessages()
+        observePing()
+    }
+
+    private fun observePing() {
+        messages.filterIsInstance<PingMessage>().onEach {
+            messageHandler.sendMessage(PongMessage(it.server1))
+        }.launchIn(coroutineScope)
     }
 
     private fun collectPartMessages() {
