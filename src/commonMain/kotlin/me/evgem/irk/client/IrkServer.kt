@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.evgem.irk.client.internal.Scoped
 import me.evgem.irk.client.internal.network.handler.message.MessageHandler
+import me.evgem.irk.client.model.ChannelName
 import me.evgem.irk.client.model.ChannelNameWithKey
 import me.evgem.irk.client.model.User
 import me.evgem.irk.client.model.message.AbstractMessage
@@ -36,7 +37,7 @@ class IrkServer internal constructor(
     var motd: String = motd
         private set
 
-    private val channels = mutableMapOf<String, IrkChannel>()
+    private val channels = mutableMapOf<ChannelName, IrkChannel>()
     private val channelsMutex = Mutex()
 
     init {
@@ -45,7 +46,7 @@ class IrkServer internal constructor(
 
     private fun collectPartMessages() {
         coroutineScope.launch {
-            receivePartMessages(withLock = true).collect()
+            receivePartMessages(withLock = true, throwOnError = false).collect()
         }
     }
 
@@ -59,7 +60,7 @@ class IrkServer internal constructor(
 
     suspend fun joinChannels(channels: Sequence<ChannelNameWithKey>): List<IrkChannel> = channelsMutex.withLock {
         val withoutJoined = channels.filter { !this.channels.containsKey(it.channelName) }
-        val names = withoutJoined.map { it.channelName }.toList()
+        val names = withoutJoined.map { it.channelName.value }.toList()
         val keys = withoutJoined.mapNotNull { it.key }.toList()
         if (names.isNotEmpty()) {
             messageHandler.sendMessage(JoinMessage(names, keys))
@@ -75,36 +76,39 @@ class IrkServer internal constructor(
 
     suspend fun partAll(): Unit = channelsMutex.withLock {
         messageHandler.sendMessage(PartAllMessage)
-        receivePartMessages(withLock = false)
+        receivePartMessages(withLock = false, throwOnError = true)
             .takeWhile { this.channels.isNotEmpty() }
             .collect()
     }
 
-    suspend fun partWithMessage(message: String?, vararg channelNames: String): Unit = channelsMutex.withLock {
+    suspend fun partWithMessage(message: String?, channelNames: Set<ChannelName>): Unit = channelsMutex.withLock {
         if (channelNames.isEmpty()) {
             return@withLock
         }
         PartMessage(
-            channels = channelNames.toList(),
+            channels = channelNames.asSequence().map { it.value }.toList(),
             partMessage = message,
         ).let { messageHandler.sendMessage(it) }
         val set = channelNames.toMutableSet()
-        receivePartMessages(withLock = false).takeWhile {
-            it.channels.forEach(set::remove)
+        receivePartMessages(withLock = false, throwOnError = true).takeWhile { message ->
+            message.channels.asSequence().map(::ChannelName).forEach(set::remove)
             set.isNotEmpty()
         }.collect()
     }
 
-    private fun receivePartMessages(withLock: Boolean): Flow<PartMessage> {
+    private fun receivePartMessages(
+        withLock: Boolean,
+        throwOnError: Boolean,
+    ): Flow<PartMessage> {
         return messageHandler
             .receiveMessages()
-            .onEach { it.throwIfError() }
+            .onEach { if (throwOnError) it.throwIfError() }
             .filterIsInstance<PartMessage>()
             .filter { it.user == me }
             .onEach { message ->
                 if (withLock) channelsMutex.lock()
                 message.channels.forEach {
-                    this.channels.remove(it)
+                    this.channels.remove(ChannelName(it))?.cancel()
                 }
                 if (withLock) channelsMutex.unlock()
             }
@@ -133,7 +137,7 @@ class IrkServer internal constructor(
             if (message is ReplyMessage && message.numericReply == KnownNumericReply.RPL_ENDOFNAMES) {
                 IrkChannel(
                     server = this@IrkServer,
-                    name = name,
+                    name = ChannelName(name),
                     topic = topic,
                     users = users,
                 ).let { emit(it) }
@@ -195,5 +199,9 @@ suspend fun IrkServer.joinChannels(channels: Iterable<ChannelNameWithKey>): List
 }
 
 suspend fun IrkServer.part(vararg channelNames: String) {
-    partWithMessage(message = null, channelNames = channelNames)
+    partWithMessage(message = null, channelNames = channelNames.asSequence().map(::ChannelName).toSet())
+}
+
+suspend fun IrkServer.part(vararg channelNames: ChannelName) {
+    partWithMessage(message = null, channelNames = channelNames.toSet())
 }
