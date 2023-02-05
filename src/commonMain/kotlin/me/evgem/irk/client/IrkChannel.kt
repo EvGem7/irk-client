@@ -57,6 +57,10 @@ class IrkChannel internal constructor(
         server.part(name)
     }
 
+    suspend fun sendMessage(text: String) {
+        server.sendMessage(name.toString(), text)
+    }
+
     internal fun cancel() {
         job.cancel()
     }

@@ -1,5 +1,6 @@
 plugins {
-    kotlin("multiplatform") version "1.7.20"
+    // specify kotlin version in your root build.gradle
+    kotlin("multiplatform")
 }
 
 group = "me.evgem.irk.client"

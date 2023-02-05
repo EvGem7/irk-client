@@ -23,6 +23,7 @@ import me.evgem.irk.client.model.message.PartAllMessage
 import me.evgem.irk.client.model.message.PartMessage
 import me.evgem.irk.client.model.message.PingMessage
 import me.evgem.irk.client.model.message.PongMessage
+import me.evgem.irk.client.model.message.PrivateMessage
 import me.evgem.irk.client.model.message.QuitMessage
 import me.evgem.irk.client.model.message.ReplyMessage
 import me.evgem.irk.client.model.message.misc.KnownNumericReply
@@ -104,6 +105,10 @@ class IrkServer internal constructor(
             message.channels.asSequence().map(::ChannelName).forEach(set::remove)
             set.isNotEmpty()
         }.collect()
+    }
+
+    suspend fun sendMessage(target: String, text: String) {
+        messageHandler.sendMessage(PrivateMessage(target, text))
     }
 
     private fun receivePartMessages(
